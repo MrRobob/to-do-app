@@ -13,18 +13,12 @@ function App() {
 
   const itemHinzufuegen = () => {
 
-    //Option 1 für Eingabecheck: falls Eingabefeld leer ist, mach nicht weiter
-
-    if (!title) {
-      return;
-    }
-
     fetch("http://localhost:3050/add", {
       method: "POST",
       headers: {"Content-Type": "application/json"},
       body: JSON.stringify({title}),
     })      
-    // hier möchte ich, dass die Liste in der App auch aktualisiert wird
+
       .then((res) => res.json())
       .then((neueAufgabe) => setTasks([...tasks, neueAufgabe]))
 
@@ -32,27 +26,40 @@ function App() {
   }
   
   const itemLoeschen = (id_nummer) => {
-    //console.log("Gedrückte Taste:" + id_nummer);
+
     fetch(`http://localhost:3050/delete/${id_nummer}`, {
       method: "DELETE",
     })
 
+      .then(() => { setTasks(tasks.filter(task => task.id !== id_nummer)); })
+
   }
+
+  const toggleCompleted = (id_nummer, currentCompleted) => {
+
+    fetch(`http://localhost:3050/update/${id_nummer}`, {
+      method: "PATCH",
+      headers: {"Content-Type": "application/json"},
+      body: JSON.stringify({ completed: !currentCompleted }),
+    })
+      .then((res) => res.json())
+      .then((updatedTask) => {setTasks(tasks.map((task) => task.id === id_nummer ? updatedTask : task));});
+  };
 
 
   return (
     <>
       <h1>To-Do List</h1>
-      <input value={title}  onChange={(e)=>setTitle(e.target.value)} />
-      <button disabled={!title.trim()} onClick={itemHinzufuegen}>Add</button> {/* Option 2 für Eingabecheck: Button wird disabled bleiben wenn das Eingabefeld leer ist*/}
+      <input className="task-input" value={title}  onChange={(e)=>setTitle(e.target.value)} />
+      <button className="add-button" disabled={!title.trim()} onClick={itemHinzufuegen}>+</button>
 
       <ul>
-        {// hier gehört der Code, um die To-Do Liste dynamisch zu gestalten
+        {
         tasks.map(({id, title, completed}) => (
-          <li key={id}>
-            <input type='checkbox' />
-            {title}
-            <button onClick={() => itemLoeschen(id)}>X</button>
+          <li className="list-item" key={id}>
+            <input className="checkbox" type="checkbox" checked={completed} on onChange={() => toggleCompleted(id, completed)} />
+            <span className="task-title">{title}</span>
+            <button className="delete-button" onClick={() => itemLoeschen(id)}>-</button>
           </li>
         ))
         }
